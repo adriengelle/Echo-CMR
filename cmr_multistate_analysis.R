@@ -19,11 +19,8 @@ library(ggplot2)
 
 ## ============================ CONFIG ========================================
 ## Edit these to match your data, then source the script.
-data_file        <- "data/EP_encounter_history_multistate.csv"  # your CSV
-start_year       <- 1994    # first survey year  = first capture-history column
-end_year         <- 2022    # last  survey year  = last  capture-history column
-last_cohort_year <- 2020    # drop cohorts ringed after this year
-threshold        <- 0.42    # juvenile decline threshold (red dashed line)
+data_file        <- "data/EP_EH_multistate.csv"  # your CSV
+threshold        <- 0.42    # juvenile survival threshold
 output_dir       <- "output"
 
 ## State codes used in the year columns of the CSV -> numeric strata for MARK
@@ -36,7 +33,14 @@ dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
 ## ---- 1. Read and prepare the encounter history ----------------------------
 EH <- read.csv(data_file, header = TRUE, check.names = FALSE)
 
-if ("chrt"   %in% names(EH)) EH <- EH %>% filter(!(chrt > last_cohort_year))
+if (!"chrt" %in% names(EH))
+  stop("The CSV has no 'chrt' (cohort) column, which is needed to set the years.")
+EH$chrt <- as.numeric(as.character(EH$chrt))
+max_chrt         <- max(EH$chrt, na.rm = TRUE)
+start_year       <- min(EH$chrt, na.rm = TRUE)  # first survey year = earliest cohort
+end_year         <- max_chrt + 1                # last survey year  = year after last cohort
+last_cohort_year <- max_chrt - 1                # analyse cohorts up to one year before the last
+
 if ("subpop" %in% names(EH)) {
   EH$subpop <- as.factor(EH$subpop)
   EH <- subset(EH, subpop %in% c("BO", "GG"))
@@ -147,15 +151,19 @@ write.csv(Psi.real, file.path(output_dir, "transition_estimates.csv"), row.names
 ## Fixed cells have se = 0; drop them, collapse duplicate strata, drop the last
 ## (confounded) estimable year per age class, and map occasion -> calendar year.
 juv_adults_surv <- S.real %>%
-  filter(se > 0) %>%
-  mutate(time = as.numeric(as.character(time)),
-         age  = ifelse(juv == 1, "Juveniles (0-1 yrs)", "Adults (2+ yrs)")) %>%
+  #filter(se > 0) %>%                                    # drop fixed / structural cells
+  mutate(
+    time = as.numeric(as.character(time)),
+    age  = ifelse(Age < 2, "Juveniles (0-1 yrs)", "Adults (2+ yrs)")   # was: juv == 1
+  ) %>%
   distinct(age, time, .keep_all = TRUE) %>%
   group_by(age) %>%
   filter(time < max(time)) %>%
   ungroup() %>%
-  mutate(Year = start_year + time - 1,
-         age  = factor(age, levels = c("Juveniles (0-1 yrs)", "Adults (2+ yrs)")))
+  mutate(
+    Year = start_year + time - 1,
+    age  = factor(age, levels = c("Juveniles (0-1 yrs)", "Adults (2+ yrs)"))
+  )
 
 thresh_df <- data.frame(
   age = factor("Juveniles (0-1 yrs)", levels = levels(juv_adults_surv$age)),
