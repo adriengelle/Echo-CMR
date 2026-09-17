@@ -1,9 +1,3 @@
----
-editor_options: 
-  markdown: 
-    wrap: 72
----
-
 # Echo parakeet — Multi-state CMR Survival Analysis
 
 An R script that fits a multi-state (Arnason-Schwarz)
