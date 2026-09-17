@@ -1,0 +1,25 @@
+# --- R session files ---
+.Rhistory
+.RData
+.Rproj.user/
+.Ruserdata
+
+# --- Generated outputs (recreated by the script) ---
+output/
+
+# --- RMark / Program MARK temporary files ---
+mark*.inp
+mark*.out
+mark*.vcv
+mark*.res
+mark*.tmp
+*.tmp
+
+# --- Real / sensitive data (users supply their own) ---
+# Comment the next two lines out if you want to publish an example CSV.
+data/*.csv
+!data/example_*.csv
+
+# --- OS cruft ---
+.DS_Store
+Thumbs.db
