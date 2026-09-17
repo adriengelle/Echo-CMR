@@ -13,7 +13,7 @@
 ## (Ctrl+Shift+S) or click "Source".
 ###############################################################################
 
-library(RMark)     # interface to Program MARK  (requires MARK installed)
+library(RMark)    # interface to Program MARK  (requires MARK installed)
 library(dplyr)
 library(ggplot2)
 
