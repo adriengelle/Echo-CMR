@@ -1,45 +1,48 @@
 ###############################################################################
-## Echo parakeet - Multi-state CMR survival analysis (RMark / Program MARK)
+## Echo parakeet - Multistate CMR analysis (RMark / Program MARK)
 ##
-## Fits an Arnason-Schwarz multi-state Cormack-Jolly-Seber model to estimate
-## age- and state-dependent survival, detection and transition probabilities,
-## then produces a juvenile / adult survival figure and a model summary.
+## Fits an Arnason-Schwarz multistate Cormack-Jolly-Seber (CJS) model to estimate
+## age- and time-dependent survival, taking into account heterogeneity in 
+## detection and transition probabilities, then produces a juvenile 
+## (<2 years old) / adult survival figure by population and a model summary.
 ##
 ## REQUIREMENTS: R, Program MARK installed, and the packages loaded below.
-## See README.md for full setup and step-by-step instructions.
+## See 'README.md' for full setup and step-by-step instructions.
 ##
-## HOW TO RUN: open this project in RStudio (so the working directory is the
-## repo root), edit the CONFIG block if needed, then source the whole file
-## (Ctrl+Shift+S) or click "Source".
+## HOW TO RUN: Source the whole file (Ctrl+Shift+S) or click "Source" after 
+## adding encounter history file to the '/data' folder
+## (script and data folder should be on the root of working directory)
 ###############################################################################
 
-library(RMark)    # interface to Program MARK  (requires MARK installed)
+library(RMark) #interface to Program MARK  (requires MARK installed)
 library(dplyr)
 library(ggplot2)
 
 ## ============================ CONFIG ========================================
-## Edit these to match your data, then source the script.
-data_file        <- "data/EP_EH_multistate.csv"  # your CSV
-threshold        <- 0.42    # juvenile survival threshold
-output_dir       <- "output"
+## Edit these if necessary, then source the script.
+output_dir <- "output"
+input_dir <- "data"
+dir.create(output_dir, showWarnings = FALSE, recursive = TRUE) #create directories if non-existing
+dir.create(input_dir, showWarnings = FALSE, recursive = TRUE)
+file <- list.files(path = "data/", pattern = "\\.csv$", full.names = TRUE)[1]
+data_file <- read.csv(file) #read unique file in 'data'
 
 ## State codes used in the year columns of the CSV -> numeric strata for MARK
 ## PB = pre-breeder (1), B = breeder (2), PO = post-breeder (3), 0 = not seen
 state_codes <- c("B" = "2", "PB" = "1", "PO" = "3", "0" = "0")
 ## ===========================================================================
 
-dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
-
 ## ---- 1. Read and prepare the encounter history ----------------------------
-EH <- read.csv(data_file, header = TRUE, check.names = FALSE)
+EH <- read.csv(file, header = TRUE, check.names = FALSE)
+EH[] <- lapply(EH, function(x) if (is.character(x)) trimws(x) else x) #removes leading/trailing whitespace (state attribution)
 
 if (!"chrt" %in% names(EH))
   stop("The CSV has no 'chrt' (cohort) column, which is needed to set the years.")
 EH$chrt <- as.numeric(as.character(EH$chrt))
 max_chrt         <- max(EH$chrt, na.rm = TRUE)
-start_year       <- min(EH$chrt, na.rm = TRUE)  # first survey year = earliest cohort
-end_year         <- max_chrt + 1                # last survey year  = year after last cohort
-last_cohort_year <- max_chrt - 1                # analyse cohorts up to one year before the last
+start_year       <- min(EH$chrt, na.rm = TRUE)  #first survey year = earliest ringed cohort
+end_year         <- max_chrt + 1                #last survey year  = year after last cohort
+last_cohort_year <- max_chrt - 1                #analyse cohorts up to one year before the last
 
 if ("subpop" %in% names(EH)) {
   EH$subpop <- as.factor(EH$subpop)
@@ -54,7 +57,7 @@ if (!all(ch_columns %in% names(EH)))
 
 ch <- apply(EH[, ch_columns, drop = FALSE], 1, function(x) {
   codes <- state_codes[as.character(x)]
-  codes[is.na(codes)] <- "0"          # anything unrecognised -> not seen
+  codes[is.na(codes)] <- "0"          #anything unrecognised -> not seen
   paste(codes, collapse = "")
 })
 
@@ -68,21 +71,21 @@ all_zero <- which(rmark_data$ch == paste(rep("0", length(ch_columns)), collapse 
 if (length(all_zero) > 0) rmark_data <- rmark_data[-all_zero, ]
 if (nrow(rmark_data) == 0) stop("No usable encounter histories after filtering.")
 
-## ---- 2. Process data + build design data (Multistrata = multistate) --------
+## ---- 2. Process data + build design data (Multistrata) --------
+
 ms.proc <- process.data(rmark_data, model = "Multistrata",
-                        strata.labels = c("1", "2", "3"))
+                        strata.labels = c("1", "2", "3"), group = 'subpop')#by pop
 ms.ddl  <- make.design.data(ms.proc)
 
 ## ---- 3. Age classes and biologically impossible cells (fixed to 0) ---------
+{
 # Survival (S)
 ms.ddl$S$ageclass3 <- cut(ms.ddl$S$Age, c(0, 2, 4, Inf), right = FALSE)
 levels(ms.ddl$S$ageclass3) <- c("Juveniles(0-1)", "Adults(2-3)", "Adults(4+)")
 ms.ddl$S$juv         <- ifelse(ms.ddl$S$ageclass3 == "Juveniles(0-1)", 1, 0)
 ms.ddl$S$adults      <- ifelse(ms.ddl$S$Age >= 2, 1, 0)
-ms.ddl$S$is_juvenile <- ifelse(ms.ddl$S$Age < 1, 1, 0)
 
 ms.ddl$S$fix <- NA
-ms.ddl$S$fix[ms.ddl$S$is_juvenile == 1 & ms.ddl$S$stratum != "1"] <- 0
 ms.ddl$S$fix[ms.ddl$S$Age == 1 & ms.ddl$S$stratum != "1"] <- 0
 ms.ddl$S$fix[ms.ddl$S$Age == 2 & ms.ddl$S$stratum == "3"] <- 0
 
@@ -110,19 +113,20 @@ ms.ddl$Psi$trans_1to2 <- as.integer(s == "1" & ts == "2")
 ms.ddl$Psi$trans_2to3 <- as.integer(s == "2" & ts == "3")
 ms.ddl$Psi$trans_3to2 <- as.integer(s == "3" & ts == "2")
 
+#impossible transitions (1 to 3, 2 to 1, 3 to 1)
 ms.ddl$Psi$fix <- NA
 ms.ddl$Psi$fix[s == "1" & ts == "3"] <- 0
 ms.ddl$Psi$fix[s == "2" & ts == "1"] <- 0
 ms.ddl$Psi$fix[s == "3" & ts == "1"] <- 0
-ms.ddl$Psi$fix[s == "1" & ts == "2" & ms.ddl$Psi$Age < 1] <- 0
+ms.ddl$Psi$fix[s == "1" & ts == "2" & ms.ddl$Psi$Age < 1] <- 0 #can't be breeder before age 2
 ms.ddl$Psi$fix[s == "2" & ts == "3" & ms.ddl$Psi$Age < 2] <- 0
 ms.ddl$Psi$fix[s == "3" & ts == "2" & ms.ddl$Psi$Age < 3] <- 0
-
-## ---- 4. Fit the model (this calls Program MARK) ----------------------------
+}
+## ---- 4. Fit the model (calls Program MARK) ----------------------------
 ms_model <- mark(ms.proc, ms.ddl,
   model.parameters = list(
-    S   = list(formula = ~ -1 + juv:time + adults:time),
-    p   = list(formula = ~ age1:time + age2plus:stratum:time),
+    S   = list(formula = ~ -1 + juv:time + adults:time + group),
+    p   = list(formula = ~ age1:time + age2plus:stratum:time + group),
     Psi = list(formula = ~ -1 + trans_1to2:age1:growth_period +
                               trans_1to2:age2:growth_period +
                               trans_1to2:age3plus:growth_period +
@@ -143,26 +147,32 @@ S.real   <- get.real(ms_model, "S",   se = TRUE)
 p.real   <- get.real(ms_model, "p",   se = TRUE)
 Psi.real <- get.real(ms_model, "Psi", se = TRUE)
 
+#write in output folder
 write.csv(S.real,   file.path(output_dir, "survival_estimates.csv"),   row.names = FALSE)
 write.csv(p.real,   file.path(output_dir, "detection_estimates.csv"),  row.names = FALSE)
 write.csv(Psi.real, file.path(output_dir, "transition_estimates.csv"), row.names = FALSE)
 
 ## ---- 6. Survival plot (juveniles 0-1 vs adults 2+) -------------------------
-## Fixed cells have se = 0; drop them, collapse duplicate strata, drop the last
-## (confounded) estimable year per age class, and map occasion -> calendar year.
+## Drop the last (confounded) estimable year per age class, 
+# and transform 'occasion' to calendar year.
+threshold <- 0.42 #juvenile survival threshold (PVA)
+
 juv_adults_surv <- S.real %>%
-  #filter(se > 0) %>%                                    # drop fixed / structural cells
+  #filter(se > 0) %>%
   mutate(
     time = as.numeric(as.character(time)),
-    age  = ifelse(Age < 2, "Juveniles (0-1 yrs)", "Adults (2+ yrs)")   # was: juv == 1
+    age  = ifelse(Age < 2, "Juveniles (0-1 yrs)", "Adults (2+ yrs)"),
+    pop  = as.character(subpop)                         
   ) %>%
-  distinct(age, time, .keep_all = TRUE) %>%
-  group_by(age) %>%
-  filter(time < max(time)) %>%
+  distinct(age, pop, time, .keep_all = TRUE) %>%        #unique by age x pop x year
+  group_by(age, pop) %>%
+  filter(time < max(time)) %>%                          #drop last estimable year, per pop
   ungroup() %>%
   mutate(
     Year = start_year + time - 1,
-    age  = factor(age, levels = c("Juveniles (0-1 yrs)", "Adults (2+ yrs)"))
+    age  = factor(age, levels = c("Juveniles (0-1 yrs)", "Adults (2+ yrs)")),
+    Population = factor(ifelse(pop == "GG", "Gorges (GG)", "Bel Ombre (BO)"),
+                        levels = c("Gorges (GG)", "Bel Ombre (BO)"))
   )
 
 thresh_df <- data.frame(
@@ -170,16 +180,20 @@ thresh_df <- data.frame(
   y   = threshold
 )
 
-p_surv <- ggplot(juv_adults_surv, aes(x = Year, y = estimate)) +
-  geom_hline(data = thresh_df, aes(yintercept = y),
+pop_cols <- c("Gorges (GG)" = "black", "Bel Ombre (BO)" = "darkgreen")
+dodge    <- position_dodge(width = 0.6)
+
+p_surv <- ggplot(juv_adults_surv, aes(x = Year, y = estimate, colour = Population)) +
+  geom_hline(data = thresh_df, aes(yintercept = y), inherit.aes = FALSE,
              linetype = "dashed", colour = "red", linewidth = 0.5) +
-  geom_errorbar(aes(ymin = lcl, ymax = ucl), alpha = 0.3) +
-  geom_line() +
-  geom_point() +
+  geom_errorbar(aes(ymin = lcl, ymax = ucl), width = 0.4, alpha = 0.3, position = dodge) +
+  geom_line(position = dodge) +
+  geom_point(position = dodge, size = 1.8) +
   facet_grid(rows = vars(age)) +
+  scale_colour_manual(values = pop_cols) +
   scale_x_continuous(breaks = seq(min(juv_adults_surv$Year),
                                   max(juv_adults_surv$Year), by = 2)) +
-  labs(x = "Year", y = "Survival Estimate (\u03A6)") +
+  labs(x = "Year", y = "Survival Estimate (\u03A6)", colour = "Population") +
   theme_bw() +
   theme(
     plot.title   = element_text(color = "#0099f9", size = 18, face = "bold", hjust = 0.5),
@@ -187,11 +201,11 @@ p_surv <- ggplot(juv_adults_surv, aes(x = Year, y = estimate)) +
     axis.title.y = element_text(color = "black", size = 18, face = "italic"),
     axis.text.x  = element_text(angle = 45, hjust = 1, size = 16),
     axis.text.y  = element_text(angle = 0, hjust = 1, size = 16),
-    strip.text.y = element_text(size = 16)
+    strip.text.y = element_text(size = 16),
+    legend.position = "top"
   )
-
 ggsave(file.path(output_dir, "survival_plot.png"), p_surv,
        width = 10, height = 8, dpi = 300)
 print(p_surv)
 
-message("Done. Outputs written to '", output_dir, "/'.")
+message("Done. Output files written to '", output_dir, "/'.")
