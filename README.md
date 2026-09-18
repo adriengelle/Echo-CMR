@@ -2,7 +2,7 @@
 
 An R script that fits a multistate (Arnason-Schwarz) Cormack-Jolly-Seber (CJS) model to capture-mark-recapture data using **RMark** (Laake and Rexstad 2022; Laake 2013) and **Program MARK** (White and Burnham 1999), and outputs age- and time-dependent survival, detection and transition estimates, a survival figure, and model summary.
 
-It runs **locally on your PC** — (no timeouts or memory limits). You need R and Program MARK installed (see below).
+It runs **locally on your PC** — (no timeouts or memory limits). You need **R** and **Program MARK** installed (see below).
 
 ------------------------------------------------------------------------
 
@@ -15,7 +15,7 @@ Given a CSV of encounter histories, the script:
     -   **Survival (Φ)** varying by age class (juvenile 0–1 vs adult 2+) and year;
     -   **Detection (p)** varying by age and state over time;
     -   **Transitions (Ψ)** between states, varying by age and population growth phase;
-    -   biologically impossible age × state combinations for this species fixed to zero (Gellé et al. 2026).
+    -   Biologically impossible age × state combinations for this species fixed to zero (Gellé et al. 2026).
 3.  Writes a model summary and CSVs of the survival, detection and transition estimates.
 4.  Produces a two-panel figure of juvenile vs adult survival over time, with a dashed threshold line level below which the population is expected to decline over the long term. Derived from a Population Viability Analysis (the point where the stochastic growth rate r \< 0). Sustained survival above the line supports a stable or growing population.
 
