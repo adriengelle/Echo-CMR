@@ -48,7 +48,7 @@ install.packages(c("RMark", "dplyr", "ggplot2"))
 
 ## Getting the script
 
-**Option A — clone from R (recommended):** In RStudio  →  **File**  →  **New Project...**  →  **Version Control**  →  **Git**  →  Paste repo URL:<https://github.com/adriengelle/Echo-CMR.git> → **Create Project**
+**Option A — clone from R (recommended):** In RStudio → **File** → **New Project...** → **Version Control** → **Git** → Paste repo URL:<https://github.com/adriengelle/Echo-CMR.git> → **Create Project**
 
 This clones the repo and opens it as an RStudio project (if any future updates, only "Pull" required in the 'Git' tab)
 
@@ -69,10 +69,10 @@ Put your CSV (**only one file!**) in the `data/` folder. It must have:
 
 Example (see also `examples/`):
 
-| id  | subpop | chrt | 1994 | 1995 | 1996 | …   |
+| id  | subpop | chrt | 1994 | 1995 | 1996 | […] |
 |-----|--------|------|------|------|------|-----|
-| 1   | GG     | 1994 | PB   | B    | 0    | …   |
-| 2   | BO     | 1995 | 0    | PB   | PO   | …   |
+| 1   | GG     | 1994 | PB   | PB   | B    | […] |
+| 2   | BO     | 1995 | 0    | PB   | 0    | […] |
 
 > The full echo parakeet re-sighting dataset is not included in this repository. Supply your own CSV in the format above.
 
