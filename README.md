@@ -128,7 +128,7 @@ set before calling the script. If your installer produced `mark64.exe` rather th
 
 ## References
 
--   Gellé, A. et al., 2026. Demographic responses to population recovery illustrated by 30 years of monitoring a once critically endangered parrot. Journal of Applied Ecology, 63 (8), e70523. 10.1111/1365-2664.70523.
+-   Gellé, A. et al., 2026. Demographic responses to population recovery illustrated by 30 years of monitoring a once critically endangered parrot. Journal of Applied Ecology, 63 (8), e70523. [10.1111/1365-2664.70523](https://besjournals.onlinelibrary.wiley.com/doi/10.1111/1365-2664.70523).
 -   Laake, J. and Rexstad, E., 2022. RMark – an alternative approach to building linear models in MARK.
 -   Laake, J.L. (Jeffrey L., 2013. RMark : an R Interface for analysis of capture-recapture data with MARK [online]. Available at: <https://repository.library.noaa.gov/view/noaa/4372> [Accessed 10 September 2024].
--   White, G.C. and Burnham, K.P., 1999. Program MARK: survival estimation from populations of marked animals. Bird Study, 46 (sup1), S120–S139. 10.1080/00063659909477239.
+-   White, G.C. and Burnham, K.P., 1999. Program MARK: survival estimation from populations of marked animals. Bird Study, 46 (sup1), S120–S139. [10.1080/00063659909477239](https://www.tandfonline.com/doi/abs/10.1080/00063659909477239).
