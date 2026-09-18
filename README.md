@@ -48,23 +48,11 @@ install.packages(c("RMark", "dplyr", "ggplot2"))
 
 ## Getting the script
 
-**Option A — clone from R (recommended):**
+**Option A — clone from R (recommended):** In RStudio  →  **File**  →  **New Project...**  →  **Version Control**  →  **Git**  →  Paste repo URL:<https://github.com/adriengelle/Echo-CMR.git> → **Create Project**
 
-``` r
-install.packages("usethis")   # if needed
-usethis::create_from_github("https://github.com/adriengelle/Echo-CMR.git",
-                            destdir = "~/projects")
-```
+This clones the repo and opens it as an RStudio project (if any future updates, only "Pull" required in the 'Git' tab)
 
-This clones the repo and opens it as an RStudio project.
-
-**Option B — clone with git:**
-
-``` bash
-git clone https://github.com/adriengelle/Echo-CMR.git
-```
-
-**Option C — download:** click **Code → Download ZIP** on the GitHub page and unzip it.
+**Option B — download:** click **Code → Download ZIP** on the GitHub page and unzip it.
 
 ------------------------------------------------------------------------
 
