@@ -12,10 +12,10 @@ Given a CSV of encounter histories, the script:
 
 1.  Builds a multistate capture history from the yearly state columns (pre-breeder / breeder / post-breeder / not seen).
 2.  Fits an Arnason-Schwarz multistate CJS model in MARK, with:
-    -   **Survival (Φ)** varying by age class (juvenile 0–1 vs adult 2+) and year;
-    -   **Detection (p)** varying by age and state over time;
-    -   **Transitions (Ψ)** between states, varying by age and population growth phase;
-    -   Biologically impossible age × state combinations for this species fixed to zero (Gellé et al. 2026).
+    - **Survival (Φ)** varying by age class (juvenile 0–1 vs adult 2+) and year;
+    - **Detection (p)** varying by age and state over time;
+    - **Transitions (Ψ)** between states, varying by age and population growth phase;
+    - Biologically impossible age × state combinations for this species fixed to zero (Gellé et al. 2026).
 3.  Writes a model summary and CSVs of the survival, detection and transition estimates.
 4.  Produces a two-panel figure of juvenile vs adult survival over time, with a dashed threshold line level below which the population is expected to decline over the long term. Derived from a Population Viability Analysis (the point where the stochastic growth rate r \< 0). Sustained survival above the line supports a stable or growing population.
 
@@ -25,16 +25,16 @@ Given a CSV of encounter histories, the script:
 
 ### 1. R (and RStudio)
 
--   **R** (≥ 4.4 recommended): <https://cran.r-project.org/>
--   **RStudio** (recommended): <https://posit.co/download/rstudio-desktop/>
+- **R** (≥ 4.4 recommended): <https://cran.r-project.org/>
+- **RStudio** (recommended): <https://posit.co/download/rstudio-desktop/>
 
 ### 2. Program MARK
 
 RMark does not fit models itself — it communicates with **Program MARK**, which must be installed on your computer.
 
--   Download MARK: <http://www.phidot.org/software/mark/>
--   Run the installer (Windows). On Windows the installer normally places `mark.exe` where RMark can find it automatically.
--   macOS / Linux: you must install the MARK command-line executable and make it available on your `PATH`. See the phidot download page for platform notes.
+- Download MARK: <http://www.phidot.org/software/mark/>
+- Run the installer (Windows). On Windows the installer normally places `mark.exe` where RMark can find it automatically.
+- macOS / Linux: you must install the MARK command-line executable and make it available on your `PATH`. See the phidot download page for platform notes.
 
 ### 3. R packages
 
@@ -60,13 +60,13 @@ This clones the repo and opens it as an RStudio project (if any future updates, 
 
 Put your CSV (**only one file!**) in the `data/` folder. It must have:
 
--   **One column per survey year**, with the year as the column header (e.g. `1994`, `1995`, … `2022`).
--   **State codes** in those columns: `PB` (pre-breeder), `B` (breeder), `PO` (post-breeder), and `0` (not seen).
--   A **`chrt`** column giving each individual's cohort (ringing) year.
--   A **`subpop`** column with the subpopulation (`BO` = Bel Ombre, `GG` = Gorges).
--   Individual 'ID' are unimportant as long as it is one row per individual history
--   The data file name does not matter
--   For more information about how to pivot re-sightings data into encounter histories, visit my other GitHub [repository](https://github.com/adriengelle/Formatting-data-for-CMR) or this [Shiny app](https://adrien-gelle.shinyapps.io/cmr-pivot/)
+- **One column per survey year**, with the year as the column header (e.g. `1994`, `1995`, … `2022`).
+- **State codes** in those columns: `PB` (pre-breeder), `B` (breeder), `PO` (post-breeder), and `0` (not seen).
+- A **`chrt`** column giving each individual's cohort (ringing) year.
+- A **`subpop`** column with the subpopulation (`BO` = Bel Ombre, `GG` = Gorges).
+- Individual 'ID' are unimportant as long as it is one row per individual history
+- The data file name does not matter
+- For more information about how to pivot re-sightings data into encounter histories, visit my other GitHub [repository](https://github.com/adriengelle/Formatting-data-for-CMR) or this [Shiny app](https://adrien-gelle.shinyapps.io/cmr-pivot/)
 
 Example (see also `examples/`):
 
@@ -117,7 +117,7 @@ set before calling the script. If your installer produced `mark64.exe` rather th
 
 ## References
 
--   Gellé, A. et al., 2026. Demographic responses to population recovery illustrated by 30 years of monitoring a once critically endangered parrot. Journal of Applied Ecology, 63 (8), e70523. [10.1111/1365-2664.70523](https://besjournals.onlinelibrary.wiley.com/doi/10.1111/1365-2664.70523).
--   Laake, J. and Rexstad, E., 2022. RMark – an alternative approach to building linear models in MARK.
--   Laake, J.L. (Jeffrey L., 2013. RMark : an R Interface for analysis of capture-recapture data with MARK [online]. Available at: <https://repository.library.noaa.gov/view/noaa/4372> [Accessed 10 September 2024].
--   White, G.C. and Burnham, K.P., 1999. Program MARK: survival estimation from populations of marked animals. Bird Study, 46 (sup1), S120–S139. [10.1080/00063659909477239](https://www.tandfonline.com/doi/abs/10.1080/00063659909477239).
+- Gellé, A. et al., 2026. Demographic responses to population recovery illustrated by 30 years of monitoring a once critically endangered parrot. Journal of Applied Ecology, 63 (8), e70523. [10.1111/1365-2664.70523](https://besjournals.onlinelibrary.wiley.com/doi/10.1111/1365-2664.70523).
+- Laake, J. and Rexstad, E., 2022. RMark – an alternative approach to building linear models in MARK.
+- Laake, J.L. (Jeffrey L., 2013. RMark : an R Interface for analysis of capture-recapture data with MARK [online]. Available at: <https://repository.library.noaa.gov/view/noaa/4372> [Accessed 10 September 2024].
+- White, G.C. and Burnham, K.P., 1999. Program MARK: survival estimation from populations of marked animals. Bird Study, 46 (sup1), S120–S139. [10.1080/00063659909477239](https://www.tandfonline.com/doi/abs/10.1080/00063659909477239).
