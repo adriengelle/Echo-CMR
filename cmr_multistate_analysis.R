@@ -152,7 +152,7 @@ write.csv(S.real,   file.path(output_dir, "survival_estimates.csv"),   row.names
 write.csv(p.real,   file.path(output_dir, "detection_estimates.csv"),  row.names = FALSE)
 write.csv(Psi.real, file.path(output_dir, "transition_estimates.csv"), row.names = FALSE)
 
-## ---- 6. Survival plot (juveniles 0-1 vs adults 2+) -------------------------
+## ---- 6. Survival plot (juveniles 0-1 vs adults 2+ by pop and state) -------------------------
 ## Drop the last (confounded) estimable year per age class, 
 # and transform 'occasion' to calendar year.
 threshold <- 0.42 #juvenile survival threshold (PVA)
@@ -219,5 +219,61 @@ p_surv <- ggplot(surv, aes(x = Year, y = estimate, colour = Population)) +
 ggsave(file.path(output_dir, "survival_plot.png"), p_surv,
        width = 13, height = 10, dpi = 300)
 print(p_surv)
+
+## ---- 7. Recapture rates plot (juveniles 1 vs adults 2+ by pop and state) -------------------------
+
+det <- p.real %>%
+  #filter(se > 0) %>%                                   # drop fixed / structural cells
+  mutate(
+    time    = as.numeric(as.character(time)),
+    stratum = as.character(stratum),
+    pop     = as.character(subpop),                    # check names(p.real) if this errors
+    class   = case_when(
+      Age <  2                  ~ "Juveniles",
+      Age >= 2 & stratum == "1" ~ "Adults (pre-breeders)",
+      Age >= 2 & stratum == "2" ~ "Adults (breeders)",
+      Age >= 2 & stratum == "3" ~ "Adults (post-breeders)"
+    )
+  ) %>%
+  filter(!is.na(class)) %>%
+  distinct(class, pop, time, .keep_all = TRUE) %>%
+  group_by(class, pop) %>%
+  filter(time < max(time)) %>%                          # drop confounded terminal occasion (optional)
+  ungroup() %>%
+  mutate(
+    Year  = start_year + time - 1,
+    class = factor(class, levels = c("Juveniles", "Adults (pre-breeders)",
+                                     "Adults (breeders)", "Adults (post-breeders)")),
+    Population = factor(ifelse(pop == "GG", "Gorges (GG)", "Bel Ombre (BO)"),
+                        levels = c("Gorges (GG)", "Bel Ombre (BO)"))
+  )
+
+pop_cols <- c("Gorges (GG)" = "black", "Bel Ombre (BO)" = "darkgreen")
+dodge    <- position_dodge(width = 0.6)
+
+p_det <- ggplot(det, aes(x = Year, y = estimate, colour = Population)) +
+  geom_errorbar(aes(ymin = lcl, ymax = ucl), width = 0.4, alpha = 0.3, position = dodge) +
+  geom_line(position = dodge) +
+  geom_point(position = dodge, size = 1.8) +
+  facet_grid(rows = vars(class)) +
+  scale_colour_manual(values = pop_cols) +
+  coord_cartesian(ylim = c(0, 1)) +
+  scale_x_continuous(breaks = seq(min(det$Year), max(det$Year), by = 2)) +
+  labs(x = "Year", y = "Detection Probability (p)", colour = "Population") +
+  theme_bw() +
+  theme(
+    plot.title   = element_text(color = "#0099f9", size = 18, face = "bold", hjust = 0.5),
+    axis.title.x = element_text(color = "black", size = 18, face = "italic"),
+    axis.title.y = element_text(color = "black", size = 18, face = "italic"),
+    axis.text.x  = element_text(angle = 45, hjust = 1, size = 16),
+    axis.text.y  = element_text(angle = 0, hjust = 1, size = 16),
+    strip.text.y = element_text(size = 13),
+    legend.position = "top",
+    legend.text = element_text(size = 13),
+    legend.title = element_text(size = 13)
+  )
+
+ggsave(file.path(output_dir, "detection_plot.png"), p_det, width = 13, height = 12, dpi = 300)
+print(p_det)
 
 message("Done. Output files written to '", output_dir, "/'.")
