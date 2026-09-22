@@ -66,6 +66,7 @@ Put your CSV (**only one file!**) in the `data/` folder. It must have:
 -   A **`subpop`** column with the subpopulation (`BO` = Bel Ombre, `GG` = Gorges).
 -   Individual 'ID' are unimportant as long as it is one row per individual history
 -   The data file name does not matter
+-   For more information about how to pivot re-sightings data into encounter histories, visit my other GitHub [repository](https://github.com/adriengelle/Formatting-data-for-CMR) or this [Shiny app](https://adrien-gelle.shinyapps.io/cmr-pivot/)
 
 Example (see also `examples/`):
 
