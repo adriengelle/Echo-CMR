@@ -19,6 +19,7 @@ Given a CSV of encounter histories, the script:
 3.  Writes a model summary and CSVs of the survival, detection and transition estimates.
 4.  Produces a three-panel figure of juvenile vs adult survival (breeders and pre-breeders) over time, with a dashed threshold line level below which the population is expected to decline over the long term. Derived from a Population Viability Analysis (the point where the stochastic growth rate r \< 0). Sustained survival above the line supports a stable or growing population.
 5.  Produces a figure of recapture rates over time (index of field team performance).
+6.  Produces two descriptive age-structure figures computed directly from the known-age encounter histories: the mean age of sighted birds over time, and the observed age distribution in the most recent year (counting fledglings).
 
 ------------------------------------------------------------------------
 
@@ -42,7 +43,7 @@ RMark does not fit models itself — it communicates with **Program MARK**, whic
 Run once in R:
 
 ``` r
-install.packages(c("RMark", "dplyr", "ggplot2"))
+install.packages(c("RMark", "dplyr", "ggplot2", "dplyr", "tidyr"))
 ```
 
 ------------------------------------------------------------------------
@@ -102,6 +103,8 @@ All written to the `output/` folder:
 | `survival_estimates.csv` | Survival (Φ) estimates with SE and 95% CI |
 | `detection_estimates.csv` | Detection (p) estimates with SE and 95% CI |
 | `transition_estimates.csv` | Transition (Ψ) estimates with SE and 95% CI |
+| `mean_age_over_time.png` | Mean age of sighted birds per year (counting fledglings age = 0) (300 dpi) |
+| `age_distribution_(last cohort).png` | Observed age distribution in the most recent year (300 dpi) |
 
 ------------------------------------------------------------------------
 

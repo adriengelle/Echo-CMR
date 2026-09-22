@@ -2,7 +2,7 @@
 ## Echo parakeet - Multistate CMR analysis (RMark / Program MARK)
 ##
 ## Fits an Arnason-Schwarz multistate Cormack-Jolly-Seber (CJS) model to estimate
-## age- and time-dependent survival, taking into account heterogeneity in 
+## age-, state- and time-dependent survival, taking into account heterogeneity in 
 ## detection and transition probabilities, then produces a juvenile 
 ## (<2 years old) / adult survival figure by population and a model summary.
 ##
@@ -17,6 +17,8 @@
 library(RMark) #interface to Program MARK  (requires MARK installed)
 library(dplyr)
 library(ggplot2)
+library(tidyr)
+library(dplyr)
 
 ## ============================ CONFIG ========================================
 ## Edit these if necessary, then source the script.
@@ -275,5 +277,54 @@ p_det <- ggplot(det, aes(x = Year, y = estimate, colour = Population)) +
 
 ggsave(file.path(output_dir, "detection_plot.png"), p_det, width = 13, height = 12, dpi = 300)
 print(p_det)
+
+# -----8. Age structure (observed) ---------------------------------
+
+# The final survey year sits one year after the last cohort
+# so it contains no age 0 birds and would give a biased mean of population age upward.
+# So the script below uses the most recent year that does contain age-0 birds 
+# as the reference instead.
+
+long <- EH %>%
+  pivot_longer(all_of(ch_columns), names_to = "year", values_to = "state") %>%
+  mutate(year = as.integer(year), state = trimws(state)) %>%
+  filter(state != "0") %>%  #detected only (observed)
+  mutate(age = year - chrt)
+max(long$age) #oldest observed age
+long %>% group_by(year) %>% summarise(mean_age = mean(age))   #mean age of detected birds
+ref_year <- long %>% filter(age == 0) %>% pull(year) %>% max() 
+
+#plots
+bw_theme <- theme_bw() +
+  theme(axis.title = element_text(size = 16, face = "italic"),
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 14),
+        axis.text.y = element_text(size = 14),
+        plot.title = element_text(size = 16, face = "bold", hjust = 0.5))
+
+mean_age <- long %>%
+  filter(year <= ref_year) %>%
+  group_by(year) %>%
+  summarise(mean_age = mean(age), se = sd(age) / sqrt(n()), n = n(), .groups = "drop")
+
+p_meanage <- ggplot(mean_age, aes(year, mean_age)) +
+  geom_ribbon(aes(ymin = mean_age - se, ymax = mean_age + se), alpha = 0.2) +
+  geom_line() + geom_point(size = 1.8) +
+  scale_x_continuous(breaks = seq(min(mean_age$year), max(mean_age$year), by = 2)) +
+  labs(x = "Year", y = "Mean age of sighted birds (years)") +
+  bw_theme
+
+ggsave(file.path(output_dir, "mean_age_over_time.png"), p_meanage, width = 10, height = 6, dpi = 300)
+
+last_year <- max(long$year)
+age_dist  <- filter(long, year == ref_year)
+
+p_agedist <- ggplot(age_dist, aes(x = age)) +
+  geom_bar() +
+  scale_x_continuous(breaks = seq(0, max(age_dist$age), by = 2)) +
+  labs(x = "Age (years)", y = "Number of birds sighted",
+       title = paste("Observed age distribution -", ref_year)) +
+  bw_theme
+
+ggsave(file.path(output_dir, "age_distribution_(last cohort).png"), p_agedist, width = 8, height = 6, dpi = 300)
 
 message("Done. Output files written to '", output_dir, "/'.")
