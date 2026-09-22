@@ -94,13 +94,14 @@ Fitting calls MARK and can take from under a minute to several minutes depending
 
 All written to the `output/` folder:
 
-| File                       | Contents                                       |
-|---------------------------|---------------------------------------------|
-| `survival_plot.png`        | Juvenile & adult survival over time (300 dpi)  |
-| `model_summary.txt`        | Model summary, AICc, deviance, parameter count |
-| `survival_estimates.csv`   | Survival (Φ) estimates with SE and 95% CI      |
-| `detection_estimates.csv`  | Detection (p) estimates with SE and 95% CI     |
-| `transition_estimates.csv` | Transition (Ψ) estimates with SE and 95% CI    |
+| File | Contents |
+|----|----|
+| `survival_plot.png` | Juvenile & adult survival over time (300 dpi) |
+| `detection_plot.png` | Juvenile & adult recapture rates over time (300 dpi) |
+| `model_summary.txt` | Model summary, AICc, deviance, parameter count |
+| `survival_estimates.csv` | Survival (Φ) estimates with SE and 95% CI |
+| `detection_estimates.csv` | Detection (p) estimates with SE and 95% CI |
+| `transition_estimates.csv` | Transition (Ψ) estimates with SE and 95% CI |
 
 ------------------------------------------------------------------------
 
