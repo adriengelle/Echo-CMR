@@ -125,7 +125,7 @@ ms.ddl$Psi$fix[s == "3" & ts == "2" & ms.ddl$Psi$Age < 3] <- 0
 ## ---- 4. Fit the model (calls Program MARK) ----------------------------
 ms_model <- mark(ms.proc, ms.ddl,
   model.parameters = list(
-    S   = list(formula = ~ -1 + juv:time + adults:time + group),
+    S   = list(formula = ~ -1 + juv:time + adults:stratum:time + group),
     p   = list(formula = ~ age1:time + age2plus:stratum:time + group),
     Psi = list(formula = ~ -1 + trans_1to2:age1:growth_period +
                               trans_1to2:age2:growth_period +
@@ -157,42 +157,52 @@ write.csv(Psi.real, file.path(output_dir, "transition_estimates.csv"), row.names
 # and transform 'occasion' to calendar year.
 threshold <- 0.42 #juvenile survival threshold (PVA)
 
-juv_adults_surv <- S.real %>%
-  #filter(se > 0) %>%
+surv <- S.real %>%
+  #filter(se > 0) %>%                                   # drop fixed / structural cells
   mutate(
-    time = as.numeric(as.character(time)),
-    age  = ifelse(Age < 2, "Juveniles (0-1 yrs)", "Adults (2+ yrs)"),
-    pop  = as.character(subpop)                         
+    time    = as.numeric(as.character(time)),
+    stratum = as.character(stratum),
+    pop     = as.character(subpop),                    # check names(S.real) if this errors
+    class   = case_when(
+      Age <  2                   ~ "Juveniles (0-1 yrs)",
+      Age >= 2 & stratum == "1"  ~ "Pre-breeders (2+ yrs)",
+      Age >= 2 & stratum == "2"  ~ "Breeders (2+ yrs)",
+      Age >= 2 & stratum == "3"  ~ "Post-breeders (3+ yrs)"
+    )
   ) %>%
-  distinct(age, pop, time, .keep_all = TRUE) %>%        #unique by age x pop x year
-  group_by(age, pop) %>%
-  filter(time < max(time)) %>%                          #drop last estimable year, per pop
+  filter(!is.na(class)) %>%
+  distinct(class, pop, time, .keep_all = TRUE) %>%      # unique by class x pop x year
+  group_by(class, pop) %>%
+  filter(time < max(time)) %>%                          # drop last estimable year, per line
   ungroup() %>%
   mutate(
-    Year = start_year + time - 1,
-    age  = factor(age, levels = c("Juveniles (0-1 yrs)", "Adults (2+ yrs)")),
+    Year  = start_year + time - 1,
+    class = factor(class, levels = c("Juveniles (0-1 yrs)", "Pre-breeders (2+ yrs)",
+                                     "Breeders (2+ yrs)", "Post-breeders (3+ yrs)")),
     Population = factor(ifelse(pop == "GG", "Gorges (GG)", "Bel Ombre (BO)"),
                         levels = c("Gorges (GG)", "Bel Ombre (BO)"))
   )
 
 thresh_df <- data.frame(
-  age = factor("Juveniles (0-1 yrs)", levels = levels(juv_adults_surv$age)),
-  y   = threshold
+  class = factor("Juveniles (0-1 yrs)", levels = levels(surv$class)),
+  y     = threshold
 )
+
 
 pop_cols <- c("Gorges (GG)" = "black", "Bel Ombre (BO)" = "darkgreen")
 dodge    <- position_dodge(width = 0.6)
 
-p_surv <- ggplot(juv_adults_surv, aes(x = Year, y = estimate, colour = Population)) +
+surv <- filter(surv, class %in% c("Juveniles (0-1 yrs)", "Pre-breeders (2+ yrs)","Breeders (2+ yrs)")) #subset before plotting (only interested in juv, pre-breeders and breeders)
+
+p_surv <- ggplot(surv, aes(x = Year, y = estimate, colour = Population)) +
   geom_hline(data = thresh_df, aes(yintercept = y), inherit.aes = FALSE,
              linetype = "dashed", colour = "red", linewidth = 0.5) +
   geom_errorbar(aes(ymin = lcl, ymax = ucl), width = 0.4, alpha = 0.3, position = dodge) +
   geom_line(position = dodge) +
   geom_point(position = dodge, size = 1.8) +
-  facet_grid(rows = vars(age)) +
+  facet_grid(rows = vars(class)) +
   scale_colour_manual(values = pop_cols) +
-  scale_x_continuous(breaks = seq(min(juv_adults_surv$Year),
-                                  max(juv_adults_surv$Year), by = 2)) +
+  scale_x_continuous(breaks = seq(min(surv$Year), max(surv$Year), by = 2)) +
   labs(x = "Year", y = "Survival Estimate (\u03A6)", colour = "Population") +
   theme_bw() +
   theme(
@@ -201,11 +211,13 @@ p_surv <- ggplot(juv_adults_surv, aes(x = Year, y = estimate, colour = Populatio
     axis.title.y = element_text(color = "black", size = 18, face = "italic"),
     axis.text.x  = element_text(angle = 45, hjust = 1, size = 16),
     axis.text.y  = element_text(angle = 0, hjust = 1, size = 16),
-    strip.text.y = element_text(size = 16),
-    legend.position = "top"
+    strip.text.y = element_text(size = 14),
+    legend.position = "top",
+    legend.text = element_text(size = 13),
+    legend.title = element_text(size = 13)
   )
 ggsave(file.path(output_dir, "survival_plot.png"), p_surv,
-       width = 10, height = 8, dpi = 300)
+       width = 13, height = 10, dpi = 300)
 print(p_surv)
 
 message("Done. Output files written to '", output_dir, "/'.")
