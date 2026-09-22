@@ -12,9 +12,9 @@ Given a CSV of encounter histories, the script:
 
 1.  Builds a multistate capture history from the yearly state columns (pre-breeder / breeder / post-breeder / not seen).
 2.  Fits an Arnason-Schwarz multistate CJS model in MARK, with:
-    - **Survival (Φ)** varying by age class (juvenile 0–1 vs adult 2+) and year;
+    - **Survival (Φ)** varying by age class (juvenile 0-1 & adult 2+), state (breeders and non-breeders) and year;
     - **Detection (p)** varying by age and state over time;
-    - **Transitions (Ψ)** between states, varying by age and population growth phase;
+    - **Transitions (Ψ)** between states, varying by age and population growth phases;
     - Biologically impossible age × state combinations for this species fixed to zero (Gellé et al. 2026).
 3.  Writes a model summary and CSVs of the survival, detection and transition estimates.
 4.  Produces a two-panel figure of juvenile vs adult survival over time, with a dashed threshold line level below which the population is expected to decline over the long term. Derived from a Population Viability Analysis (the point where the stochastic growth rate r \< 0). Sustained survival above the line supports a stable or growing population.
@@ -95,7 +95,7 @@ All written to the `output/` folder:
 
 | File                       | Contents                                       |
 |---------------------------|---------------------------------------------|
-| `survival_plot.png`        | Juvenile vs adult survival over time (300 dpi) |
+| `survival_plot.png`        | Juvenile & adult survival over time (300 dpi) |
 | `model_summary.txt`        | Model summary, AICc, deviance, parameter count |
 | `survival_estimates.csv`   | Survival (Φ) estimates with SE and 95% CI      |
 | `detection_estimates.csv`  | Detection (p) estimates with SE and 95% CI     |
